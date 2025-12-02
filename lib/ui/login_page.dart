@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:tokokita/bloc/login_bloc.dart';
+import 'package:tokokita/helpers/user_info.dart';
+import 'package:tokokita/ui/produk_page.dart';
 import 'package:tokokita/ui/registrasi_page.dart';
+import 'package:tokokita/widget/warning_dialog.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({Key? key}) : super(key: key);
@@ -12,9 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   final _emailTextboxController = TextEditingController();
   final _passwordTextboxController = TextEditingController();
-
-  final Color _primaryColor = const Color(0xFF673AB7); 
-  final Color _accentColor = const Color(0xFF9575CD); 
+  final Color _primaryColor = const Color(0xFF673AB7);
 
   @override
   Widget build(BuildContext context) {
@@ -28,19 +30,22 @@ class _LoginPageState extends State<LoginPage> {
               decoration: BoxDecoration(
                 color: _primaryColor,
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(50),
-                  bottomRight: Radius.circular(50),
-                ),
+                    bottomLeft: Radius.circular(50),
+                    bottomRight: Radius.circular(50)),
               ),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.shopping_bag_outlined, size: 80, color: Colors.white),
+                    const Icon(Icons.shopping_bag_outlined,
+                        size: 80, color: Colors.white),
                     const SizedBox(height: 10),
                     const Text(
                       "TokoKita Firyal",
-                      style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+                      style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white),
                     ),
                   ],
                 ),
@@ -51,7 +56,8 @@ class _LoginPageState extends State<LoginPage> {
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Card(
                 elevation: 5,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(25)),
                 child: Padding(
                   padding: const EdgeInsets.all(30),
                   child: Form(
@@ -60,7 +66,10 @@ class _LoginPageState extends State<LoginPage> {
                       children: [
                         Text(
                           "Login Firyal",
-                          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: _primaryColor),
+                          style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: _primaryColor),
                         ),
                         const SizedBox(height: 30),
                         _emailTextField(),
@@ -93,10 +102,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       keyboardType: TextInputType.emailAddress,
       controller: _emailTextboxController,
-      validator: (value) {
-        if (value!.isEmpty) return 'Email harus diisi';
-        return null;
-      },
+      validator: (value) => value!.isEmpty ? 'Email harus diisi' : null,
     );
   }
 
@@ -111,10 +117,7 @@ class _LoginPageState extends State<LoginPage> {
       ),
       obscureText: true,
       controller: _passwordTextboxController,
-      validator: (value) {
-        if (value!.isEmpty) return "Password harus diisi";
-        return null;
-      },
+      validator: (value) => value!.isEmpty ? "Password harus diisi" : null,
     );
   }
 
@@ -125,27 +128,75 @@ class _LoginPageState extends State<LoginPage> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
           backgroundColor: _primaryColor,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
           elevation: 5,
         ),
-        child: const Text("LOGIN", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+        child: _isLoading
+            ? const CircularProgressIndicator(color: Colors.white)
+            : const Text("LOGIN",
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white)),
         onPressed: () {
-          var validate = _formKey.currentState!.validate();
+          if (!_isLoading) {
+            var validate = _formKey.currentState!.validate();
+            if (validate) _submit();
+          }
         },
       ),
     );
+  }
+
+  void _submit() {
+    _formKey.currentState!.save();
+    setState(() {
+      _isLoading = true;
+    });
+    LoginBloc.login(
+            email: _emailTextboxController.text,
+            password: _passwordTextboxController.text)
+        .then((value) async {
+      if (value.code == 200) {
+        await UserInfo().setToken(value.token.toString());
+        await UserInfo().setUserID(int.parse(value.userID.toString()));
+        Navigator.pushReplacement(context,
+            MaterialPageRoute(builder: (context) => const ProdukPage()));
+      } else {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (BuildContext context) => const WarningDialog(
+                  description: "Login gagal, silahkan coba lagi",
+                ));
+      }
+      setState(() {
+        _isLoading = false;
+      });
+    }, onError: (error) {
+      showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (BuildContext context) => const WarningDialog(
+                description: "Login gagal, silahkan coba lagi",
+              ));
+      setState(() {
+        _isLoading = false;
+      });
+    });
   }
 
   Widget _menuRegistrasi() {
     return Center(
       child: InkWell(
         onTap: () {
-          Navigator.push(context, MaterialPageRoute(builder: (context) => const RegistrasiPage()));
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) => const RegistrasiPage()));
         },
-        child: Text(
-          "Belum punya akun? Daftar disini",
-          style: TextStyle(color: _primaryColor, fontWeight: FontWeight.w600),
-        ),
+        child: Text("Belum punya akun? Daftar disini",
+            style:
+                TextStyle(color: _primaryColor, fontWeight: FontWeight.w600)),
       ),
     );
   }

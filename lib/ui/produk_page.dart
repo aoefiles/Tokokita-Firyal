@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:tokokita/bloc/logout_bloc.dart';
+import 'package:tokokita/bloc/produk_bloc.dart';
 import 'package:tokokita/model/produk.dart';
+import 'package:tokokita/ui/login_page.dart';
 import 'package:tokokita/ui/produk_detail.dart';
 import 'package:tokokita/ui/produk_form.dart';
 
@@ -10,17 +13,16 @@ class ProdukPage extends StatefulWidget {
 }
 
 class _ProdukPageState extends State<ProdukPage> {
-  
   final Color _primaryColor = const Color(0xFF673AB7);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7), 
+      backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
-        
-        title: Text('List Produk Firyal', 
-            style: TextStyle(color: Colors.grey[900], fontWeight: FontWeight.bold)),
+        title: Text('List Produk Firyal',
+            style: TextStyle(
+                color: Colors.grey[900], fontWeight: FontWeight.bold)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -30,7 +32,8 @@ class _ProdukPageState extends State<ProdukPage> {
             child: IconButton(
               icon: Icon(Icons.add_circle, size: 32, color: _primaryColor),
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProdukForm()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ProdukForm()));
               },
             ),
           )
@@ -44,51 +47,50 @@ class _ProdukPageState extends State<ProdukPage> {
               accountName: const Text("Firyal Admin"),
               accountEmail: const Text("firyal@tokokita.com"),
               currentAccountPicture: const CircleAvatar(
-                backgroundColor: Colors.white, 
-                child: Icon(Icons.person, color: Colors.deepPurple)
-              ),
+                  backgroundColor: Colors.white,
+                  child: Icon(Icons.person, color: Colors.deepPurple)),
             ),
             ListTile(
               leading: const Icon(Icons.logout, color: Colors.red),
               title: const Text('Logout', style: TextStyle(color: Colors.red)),
-              onTap: () async {},
+              onTap: () async {
+                await LogoutBloc.logout().then((value) => {
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(
+                              builder: (context) => const LoginPage()),
+                          (route) => false)
+                    });
+              },
             )
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-        child: ListView(
-          children: [
-            
-            ItemProduk(
-              produk: Produk(
-                id: "1", 
-                kodeProduk: 'A001', 
-                namaProduk: 'Kamera', 
-                hargaProduk: 5000000
-              )
-            ),
-            ItemProduk(
-              produk: Produk(
-                id: "2", 
-                kodeProduk: 'A002', 
-                namaProduk: 'Kulkas', 
-                hargaProduk: 2500000
-              )
-            ),
-            ItemProduk(
-              produk: Produk(
-                id: "3", 
-                kodeProduk: 'A003', 
-                namaProduk: 'Mesin Cuci', 
-                hargaProduk: 2000000
-              )
-            ),
-          ],
-        ),
+      body: FutureBuilder<List<Produk>>(
+        future: ProdukBloc.getProduks(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) print(snapshot.error);
+          return snapshot.hasData
+              ? ListProduk(list: snapshot.data)
+              : const Center(
+                  child: CircularProgressIndicator(),
+                );
+        },
       ),
     );
+  }
+}
+
+class ListProduk extends StatelessWidget {
+  final List<Produk>? list;
+  const ListProduk({Key? key, this.list}) : super(key: key);
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+        itemCount: list == null ? 0 : list!.length,
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+        itemBuilder: (context, i) {
+          return ItemProduk(produk: list![i]);
+        });
   }
 }
 
@@ -100,7 +102,10 @@ class ItemProduk extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.push(context, MaterialPageRoute(builder: (context) => ProdukDetail(produk: produk)));
+        Navigator.push(
+            context,
+            MaterialPageRoute(
+                builder: (context) => ProdukDetail(produk: produk)));
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 15),
@@ -109,18 +114,16 @@ class ItemProduk extends StatelessWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1), 
-              spreadRadius: 2, 
-              blurRadius: 10, 
-              offset: const Offset(0, 3)
-            ),
+                color: Colors.grey.withOpacity(0.1),
+                spreadRadius: 2,
+                blurRadius: 10,
+                offset: const Offset(0, 3)),
           ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(15.0),
           child: Row(
             children: [
-              
               Container(
                 width: 70,
                 height: 70,
@@ -128,48 +131,43 @@ class ItemProduk extends StatelessWidget {
                   color: Colors.deepPurple[50],
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: getIconForProduct(produk.namaProduk!), 
+                child: getIconForProduct(produk.namaProduk!),
               ),
               const SizedBox(width: 15),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      produk.namaProduk!,
-                      style: const TextStyle(
-                        fontSize: 16, 
-                        fontWeight: FontWeight.bold, 
-                        color: Colors.black87
-                      ),
-                    ),
+                    Text(produk.namaProduk!,
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87)),
                     const SizedBox(height: 5),
-                    Text(
-                      "Kode: ${produk.kodeProduk}", 
-                      style: TextStyle(fontSize: 12, color: Colors.grey[500]),
-                    ),
+                    Text("Kode: ${produk.kodeProduk}",
+                        style:
+                            TextStyle(fontSize: 12, color: Colors.grey[500])),
                     const SizedBox(height: 5),
-                    Text(
-                      "Rp ${produk.hargaProduk}",
-                      style: const TextStyle(
-                        fontSize: 15, 
-                        fontWeight: FontWeight.w700, 
-                        color: Colors.black
-                      ),
-                    ),
+                    Text("Rp ${produk.hargaProduk}",
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black)),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.deepPurple,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Text(
-                  "Detail", 
-                  style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold)
-                ),
+                child: const Text("Detail",
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold)),
               )
             ],
           ),
@@ -178,7 +176,6 @@ class ItemProduk extends StatelessWidget {
     );
   }
 
-  
   Widget getIconForProduct(String name) {
     IconData icon;
     if (name.toLowerCase().contains('kamera')) {
