@@ -178,8 +178,6 @@ Menggunakan desain *bottom sheet style* (kartu putih dengan sudut melengkung di 
 
 ![Detail Produk](detailproduk.png)
 
-**Fitur Smart Icon:**
-Aplikasi secara cerdas menentukan ikon apa yang harus ditampilkan berdasarkan nama produk yang diinputkan pengguna.
 
 **Kode Implementasi:**
 Pada file `produk_detail.dart`, fungsi `_getIconForProduct` melakukan pengecekan string nama produk.
