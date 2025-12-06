@@ -1,4 +1,4 @@
-# 🛍️ TokoKita Firyal - Mobile E-Commerce App
+# TokoKita Firyal - Mobile E-Commerce App
 
 
 **TokoKita Firyal** adalah aplikasi manajemen produk berbasis mobile yang dibangun dengan teknologi **Flutter** (Frontend) dan **CodeIgniter 4** (Backend API)  dilengkapi dengan sistem autentikasi token dan manajemen data produk (CRUD) yang terintegrasi.
